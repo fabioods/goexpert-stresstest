@@ -1,0 +1,36 @@
+package dependencyinjector
+
+import (
+	"github.com/fabioods/goexpert-stresstest-cli-challenge/internal/infra/cli"
+	"github.com/fabioods/goexpert-stresstest-cli-challenge/internal/infra/cli/commands"
+	"github.com/fabioods/goexpert-stresstest-cli-challenge/internal/pkg/httpclient"
+	"github.com/fabioods/goexpert-stresstest-cli-challenge/internal/usecases/report"
+	"github.com/fabioods/goexpert-stresstest-cli-challenge/internal/usecases/stress"
+)
+
+type DependencyInjectorInterface interface {
+	Inject() (*Dependencies, error)
+}
+
+type DependencyInjector struct{}
+
+type Dependencies struct {
+	CLI cli.CLIInterface
+}
+
+func NewDependencyInjector() *DependencyInjector {
+	return &DependencyInjector{}
+}
+
+func (d *DependencyInjector) Inject() (*Dependencies, error) {
+	httpClient := httpclient.NewHttpClient()
+	stressTestUseCase := stress.NewStressTestUseCase(httpClient)
+	reportUseCase := report.NewReportUseCase()
+	stressTestCmd := commands.NewStressTestCmd(stressTestUseCase, reportUseCase)
+
+	cli := cli.NewCLI(stressTestCmd.Build())
+
+	return &Dependencies{
+		CLI: cli,
+	}, nil
+}
